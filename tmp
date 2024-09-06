@@ -1,0 +1,38 @@
+ ## Base image: Using Ubuntu 22.04
+ ARG DOCKER_FROM=ubuntu:22.04
+ FROM ${DOCKER_FROM} AS builder
+
+ ENV DEBIAN_FRONTEND=noninteractive
+
+
+ RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/01norecommend
+ RUN echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/01norecommend
+
+ # Update and install essential tools
+ RUN apt-get update && apt-get upgrade -y && \
+     apt-get install -y \
+     ca-certificates \
+     curl \
+     gnupg \
+     gpg-agent \
+     locales \
+     lsb-release \
+     wget \
+     unzip \
+     less jq strace procps awscli vim-tiny gdb gdbserver dumb-init daemontools lz4 libpq-dev libpq5 lsof htop && \
+     apt-get clean
+
+ # Set up the locale
+ RUN set -eux; \
+     find /usr/share/i18n/charmaps/ -type f ! -name UTF-8.gz -delete; \
+     find /usr/share/i18n/locales/ -type f ! -name en_US ! -name en_GB ! -name i18n* ! -name iso14651_t1 ! -name iso14651_t1_common ! -name 'translit_*' -delete; \
+     echo 'en_US.UTF-8 UTF-8' > /usr/share/i18n/SUPPORTED; \
+     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+
+ # Clean up unnecessary files
+ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+ # Define the default command for the container
+ CMD ["/bin/bash"]
